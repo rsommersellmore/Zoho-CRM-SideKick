@@ -10,6 +10,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+      AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -40,16 +43,28 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           mkdir dist
-          cp build/chrome-mv3-prod.zip "dist/powercrm-sidekick-zoho-chrome-$VERSION.zip"
-          cp build/firefox-mv3-prod.zip "dist/powercrm-sidekick-zoho-firefox-$VERSION.zip"
+          cp build/chrome-mv3-prod.zip "dist/zoho-crm-sidekick-chrome-$VERSION.zip"
+          cp build/firefox-mv3-prod.zip "dist/zoho-crm-sidekick-firefox-$VERSION.zip"
+      - name: Sign the Firefox package
+        if: github.event_name == 'release' && env.AMO_JWT_ISSUER != ''
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          npx --yes web-ext@8 sign \
+            --source-dir build/firefox-mv3-prod \
+            --artifacts-dir web-ext-artifacts \
+            --channel unlisted \
+            --api-key "$AMO_JWT_ISSUER" \
+            --api-secret "$AMO_JWT_SECRET" \
+            --approval-timeout 900000
+          cp web-ext-artifacts/*.xpi "dist/zoho-crm-sidekick-firefox-$VERSION.xpi"
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: extension-packages
-          path: dist/*.zip
+          path: dist/*
       - name: Attach packages to the release
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$TAG" dist/*.zip --clobber --repo "$GITHUB_REPOSITORY"
+        run: gh release upload "$TAG" dist/* --clobber --repo "$GITHUB_REPOSITORY"

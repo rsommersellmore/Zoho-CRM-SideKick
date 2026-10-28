@@ -18,6 +18,7 @@ import { forwardRef, useMemo, useState } from "react";
 import { ProcessButton, type ProcessProps, type ProcessRef } from "../../utils/global/.processClass";
 import useCopyWithSnack from "../../utils/hooks/use/useCopyWithSnack";
 import { getRecordLocation } from "../../utils/zoho/environment";
+import { findModuleForTab } from "../../utils/zoho/modules";
 import { useLocationHref } from "../../utils/zoho/useLocationHref";
 import { useZohoFields, useZohoModules, useZohoRecord } from "../../utils/zoho/ZohoApi";
 
@@ -51,14 +52,9 @@ function RecordViewerContent() {
 
     const modules = useZohoModules();
 
-    // The URL contains the module's "module_name" (e.g. Potentials), the API needs its "api_name" (e.g. Deals)
+    // The URL contains the module's tab name (e.g. Potentials), the API needs its "api_name" (e.g. Deals)
     const module = useMemo(
-        () =>
-            location
-                ? modules.data?.find(
-                      (m) => m.module_name === location.moduleTab || m.api_name === location.moduleTab
-                  ) ?? null
-                : null,
+        () => (location ? findModuleForTab(modules.data, location.moduleTab) : null),
         [location, modules.data]
     );
 
