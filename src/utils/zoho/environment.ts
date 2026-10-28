@@ -14,7 +14,7 @@ export interface ZohoEnvironment {
 }
 
 export interface ZohoRecordLocation {
-    /** Module name as it appears in the URL (Zoho "module_name", e.g. "Potentials" for Deals) */
+    /** Module name as it appears in the URL, e.g. "Potentials" for Deals. Resolve it with findModuleForTab. */
     moduleTab: string;
     recordId: string;
 }
